@@ -1,5 +1,39 @@
 <?php
 
+    function pageBanner($args)
+    {
+        if (! $args['title']) {
+            $args['title'] =  get_the_title();
+        }
+        
+        if (! $args['subtitle']) {
+            $args['subtitle'] =  get_field('page_banner_subtitle');
+        }
+        
+        if (! $args['photo']) {
+            if (get_field('page_banner_background_image')) {
+                $args['photo']=get_field('page_banner_background_image')['sizes']['pageBanner'];
+            } else {
+                $args['photo']=get_theme_file_uri('/images/ocean.jpg');
+            }
+        } ?>
+
+<div class="page-banner">
+    <div class="page-banner__bg-image"
+        style="background-image: url(<?php  echo $args['photo']  ?>);">
+    </div>
+    <div class="page-banner__content container container--narrow">
+        <h1 class="page-banner__title"><?php echo $args['title'] ?>
+        </h1>
+        <div class="page-banner__intro">
+            <p><?php  echo $args['subtitle']  ?>
+            </p>
+        </div>
+    </div>
+</div>
+<?php
+    }
+
 
     function theme_files()
     {
@@ -25,49 +59,44 @@
 
         //This function below show title of page in browser's nav bar
         add_theme_support("title-tag");
+        add_theme_support('post-thumbnails');
+        add_image_size('professorLandscape', 400, 260, true);
+        add_image_size('professorPortrait', 480, 650, true);
+        add_image_size('pageBanner', 1500, 350, true);
     };
     add_action("after_setup_theme", "theme_features");
 
-    // Section below is to create custom posts type
- 
-    /**
-     * Register a custom post type
-     *
-     * Supplied is a "reasonable" list of defaults
-     *  register_post_type for full list of options for register_post_type
-     *  add_post_type_support for full descriptions of 'supports' options
-     *  get_post_type_capabilities for full list of available fine grained capabilities that are supported
-     */
 
 
-    function university_post_types()
+    function university_adjust_queries($query)
     {
-        register_post_type('event', array(
-            'public' => true,
-            'rewrite' => array('slug'=>'event'),
-            'hierarchical' => true,
-            'has_archive' => true,
-            'show_ui' => true,
-        'show_in_menu' => true,
-        'menu_position' => 7,
-        'show_in_nav_menus' => true,
-        'publicly_queryable' => true,
-        'exclude_from_search' => false,
-        'query_var' => true,
-        'can_export' => true,
-        'capability_type' => 'page',
-            'labels' => array(
-                'name' => 'Events',
-                 'add_new_item' => "Add New Event",
-                 'edit_item' => "Edit Event",
-                 "all_items" => "All Events",
-                 "singular_name" => "Event"
-            ),
-            'menu_icon'=>'dashicons-calendar',
-            'supports' => array( 'title', 'editor','comments', 'revisions','author', 'excerpt'  )
+        if (!is_admin() && is_post_type_archive('program') && $query ->is_main_query()) {
+            $query->set('orderby', 'title');
+            $query->set('order', 'ASC');
+            $query->set('posts_per_page', '-1');
+        }
+        if (!is_admin() && is_post_type_archive('event') && $query ->is_main_query()) {
+            $today = date('Ymd');
 
-        ));
+            $query->set('meta_key', 'event_date');
+            $query->set('orderby', 'meta_value_num');
+            $query->set('order', 'ASC');
+            $query->set('meta_query', array(
+                array(
+                            'key' => 'event_date',
+                            'compare' => '>=',
+                            'value' => $today,
+                            'type' => 'numeric'
+                        )
+                ));
+        }
     }
 
+    add_action('pre_get_posts', 'university_adjust_queries');
+    function universityMapKey($api)
+    {
+        $api['key']='ABQIAAAAvZMU4-DFRYtw1UlTj_zc6hT2yXp_ZAY8_ufC3CFXhHIE1NvwkxQcT1h-VA8wQL5JBdsM5JWeJpukvw ';
+        return $api;
+    }
 
-    add_action("init", "university_post_types");
+    add_filter('acf/fields/google-map/api', 'universityMapKey');
