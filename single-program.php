@@ -17,7 +17,8 @@
         <p><a class="metabox__blog-home-link"
                 href="<?php  echo get_post_type_archive_link('program'); ?>"><i
                     class="fa fa-home" aria-hidden="true"></i> All Programs</a>
-            <span class="metabox__main">Postede by <?php the_author_posts_link() ?> on <?php the_time('d.M.Y') ?> in <?php echo get_the_category_list(", ") ?></span>
+            <span class="metabox__main"> <?php the_title(); ?>
+            </span>
         </p>
     </div>
     <div class="generic-content">
@@ -114,7 +115,21 @@
                 get_template_part('template-parts/content', get_post_type());
             }
         }
-        wp_reset_postdata(); ?>
+        wp_reset_postdata();
+
+        
+        $relatedCampuses = get_field('related_campus');
+        if ($relatedCampuses) {
+            echo '<hr class="section-break">';
+            echo '<h2>'.get_the_title().' is Available at these Campuses.</h2>';
+            echo '<ul class="min-list link-list">';
+            foreach ($relatedCampuses as $campus) {
+                ?>
+    <li><a href="<?php echo get_the_permalink($campus) ?>"><?php echo get_the_title($campus); ?></a></li>
+    <?php
+            }
+            echo '</ul>';
+        } ?>
 </div>
 
 <?php
