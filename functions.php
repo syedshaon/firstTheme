@@ -40,11 +40,10 @@
         wp_enqueue_script("googleMap", 'https://maps.googleapis.com/maps/api/js?key=ABQIAAAAvZMU4-DFRYtw1UlTj_zc6hT2yXp_ZAY8_ufC3CFXhHIE1NvwkxQcT1h-VA8wQL5JBdsM5JWeJpukvw', null, '1.0', true);
 
         wp_enqueue_script("mainJS", get_theme_file_uri('/js/scripts-bundled.js'), null, '1.0', true);
-        wp_enqueue_style("googleFont", "//fonts.googleapis.com/css?family=Roboto+Condensed:300,300i,400,400i,700,700i|Roboto:100,300,400,400i,700,700i
-");
-        wp_enqueue_style('font-awesome', '//maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"
-');
+        wp_enqueue_style("googleFont", "//fonts.googleapis.com/css?family=Roboto+Condensed:300,300i,400,400i,700,700i|Roboto:100,300,400,400i,700,700i)");
+        wp_enqueue_style('font-awesome', '//maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"');
         wp_enqueue_style("main", get_stylesheet_uri());
+        wp_localize_script('mainJS', 'siteSearch', array('root_url' =>get_site_url(), ));
     }
 
 
@@ -107,3 +106,50 @@
     }
 
     add_filter('acf/fields/google-map/api', 'universityMapKey');
+
+
+    // Redirect subsciber account out of admin and onto homepage
+
+    add_action('admin_init', 'redirectToFrontEnd');
+    function redirectToFrontEnd()
+    {
+        $ourCurrentUser =wp_get_current_user();
+        if (count($ourCurrentUser -> roles) ==1 && $ourCurrentUser->roles[0] == 'subscriber') {
+            wp_redirect(site_url('/'));
+            exit;
+        }
+    }
+
+    // Hide menu bar on top for subscribers
+     add_action('wp_loaded', 'noSubsAdminBar');
+    function noSubsAdminBar()
+    {
+        $ourCurrentUser =wp_get_current_user();
+        if (count($ourCurrentUser -> roles) ==1 && $ourCurrentUser->roles[0] == 'subscriber') {
+            show_admin_bar(false);
+        }
+    }
+
+    // customize login screen
+    add_filter('login_headerurl', 'ourHeaderUrl');
+
+
+    function ourHeaderUrl()
+    {
+        return esc_url(site_url('/')) ;
+    }
+
+    add_action('login_enqueue_scripts', 'ourLoginCss');
+
+    function ourLoginCss()
+    {
+        wp_enqueue_style("main", get_stylesheet_uri());
+        wp_enqueue_style("googleFont", "//fonts.googleapis.com/css?family=Roboto+Condensed:300,300i,400,400i,700,700i|Roboto:100,300,400,400i,700,700i)");
+    }
+
+    add_filter('login_headertitle', 'ourLoginTitle');
+
+    function ourLoginTitle()
+    {
+        return get_bloginfo('name');
+    }
